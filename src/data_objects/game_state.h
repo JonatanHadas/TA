@@ -6,6 +6,8 @@
 
 #include <vector>
 
+#include "../algorithms/tree_span.h"
+
 using namespace std;
 
 class Edge{
@@ -42,6 +44,8 @@ public:
 	const vector<Edge>& get_edges() const;
 	
 	vector<Edge> get_edges(unsigned int node) const;
+
+	graph_t get_graph() const;
 };
 
 class GameState{
@@ -49,8 +53,10 @@ class GameState{
 	
 	vector<unsigned int> stations;
 	vector<unsigned int> rails;
+	
+	unsigned int current_player;
 public:
-	GameState(const GameBoard& board, const vector<unsigned int>& stations, const vector<unsigned int>& rails);
+	GameState(const GameBoard& board, const vector<unsigned int>& stations, const vector<unsigned int>& rails, unsigned int current_player);
 	
 	void serialize(ostream& output) const;
 	static GameState deserialize(istream& input);
@@ -60,11 +66,16 @@ public:
 	const vector<unsigned int>& get_rails() const;
 	vector<Edge> get_rail_edges() const;
 	
+	unsigned int get_current_player() const;
+	void set_current_player(unsigned int player);
+	
 	void add_rail(unsigned int edge_index);
 	void undo_rail();
 	
 	void add_station(unsigned int node_index);
 	void undo_station();
+	
+	graph_t get_graph() const;
 };
 	
 #endif

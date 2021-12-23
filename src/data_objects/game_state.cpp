@@ -110,12 +110,24 @@ vector<Edge> GameBoard::get_edges(unsigned int node) const{
 	return move(neighbors);
 }
 
+graph_t GameBoard::get_graph() const{
+	graph_t graph(node_num);
+	
+	for(Edge edge: edges){
+		graph[edge.get_node_a()][edge.get_node_b()] = edge.get_weight();
+		graph[edge.get_node_b()][edge.get_node_a()] = edge.get_weight();
+	}
+	
+	return graph;
+}
 
 
-GameState::GameState(const GameBoard& board, const vector<unsigned int>& stations, const vector<unsigned int>& rails) :
+
+GameState::GameState(const GameBoard& board, const vector<unsigned int>& stations, const vector<unsigned int>& rails, unsigned int current_player) :
 	board(board),
 	stations(stations),
-	rails(rails)
+	rails(rails),
+	current_player(current_player)
 	{
 }
 	
@@ -133,9 +145,11 @@ void GameState::serialize(ostream& output) const{
 	for(unsigned int i = 0; i < rail_num; i++){
 		write_raw(output, rails[i]);
 	}
+	
+	write_raw(output, current_player);
 }
 GameState GameState::deserialize(istream& input){
-	GameState state(GameBoard::deserialize(input), vector<unsigned int>(), vector<unsigned int>());
+	GameState state(GameBoard::deserialize(input), vector<unsigned int>(), vector<unsigned int>(), 0);
 	
 	unsigned int station_num = read_raw<unsigned int>(input);
 	for(unsigned int i = 0; i < station_num; i++){
@@ -146,6 +160,8 @@ GameState GameState::deserialize(istream& input){
 	for(unsigned int i = 0; i < rail_num; i++){
 		state.rails.push_back(read_raw<unsigned int>(input));
 	}
+	
+	state.current_player = read_raw<unsigned int>(input);
 	
 	return move(state);
 }
@@ -169,6 +185,13 @@ vector<Edge> GameState::get_rail_edges() const{
 	return move(rail_edges);
 }
 
+unsigned int GameState::get_current_player() const{
+	return current_player;
+}
+void GameState::set_current_player(unsigned int player){
+	current_player = player;
+}
+
 void GameState::add_rail(unsigned int edge_index){
 	rails.push_back(edge_index);
 }
@@ -181,4 +204,15 @@ void GameState::add_station(unsigned int node_index){
 }
 void GameState::undo_station(){
 	stations.pop_back();
+}
+
+graph_t GameState::get_graph() const{
+	graph_t graph = board.get_graph();
+	
+	for(Edge edge: get_rail_edges()){
+		graph[edge.get_node_a()][edge.get_node_b()] = 0;
+		graph[edge.get_node_b()][edge.get_node_a()] = 0;
+	}
+	
+	return graph;
 }
