@@ -7,16 +7,28 @@ void GameRound::add_rail(int edge_index){
 }
 void GameRound::end_turn(){
 	state.set_current_player((state.get_current_player() + 1) % settings.get_player_num());
+	for(auto entry: observers){
+		entry.first->set_current_player(state.get_current_player());
+	}
 }
 
-GameRound::GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities) :
+GameRound::GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers) :
 	state(state),
 	settings(settings),
 	connectivity(state.get_board().get_node_num()),
-	player_cities(player_cities){
-	
+	player_cities(player_cities),
+	observers(observers){
+
 	for(Edge edge: state.get_rail_edges()){
 		connectivity.unify(edge.get_node_a(), edge.get_node_b());
+	}
+	
+	for(auto entry: observers){
+		entry.first->clear_board();
+		if(entry.second < settings.get_player_num()){
+			entry.first->reveal_player_cities(entry.second, player_cities[entry.second]);
+		}
+		entry.first->set_current_player(state.get_current_player());
 	}
 }
 
@@ -40,6 +52,9 @@ bool GameRound::place_station(unsigned int node_index){
 	}
 	
 	state.add_station(node_index);
+	for(auto entry: observers){
+		entry.first->add_station(node_index);
+	}
 	end_turn();
 	return true;
 }
@@ -71,6 +86,9 @@ bool GameRound::play(const vector<unsigned int> edge_indices){
 	for(auto rail: edge_indices){
 		add_rail(rail);
 	}
+	for(auto entry: observers){
+		entry.first->play(edge_indices);
+	}
 	end_turn();
 	return true;
 }
@@ -86,4 +104,20 @@ bool GameRound::check_win(unsigned int player_index) const{
 	}
 	
 	return true;
+}
+
+void GameRound::add_observer(Observer* observer, unsigned int player_index){
+	observer->initialize(state, settings);
+	if(player_index < settings.get_player_num()){
+		observer->reveal_player_cities(player_index, player_cities[player_index]);
+	}
+	observers[observer] = player_index;
+}
+void GameRound::end_round(){
+	for(auto entry: observers){
+		entry.first->end_round();
+		for(unsigned int i = 0; i < settings.get_player_num(); i++){
+			entry.first->reveal_player_cities(i, player_cities[i]);
+		}
+	}
 }

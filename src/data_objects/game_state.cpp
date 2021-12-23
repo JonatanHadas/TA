@@ -206,6 +206,11 @@ void GameState::undo_station(){
 	stations.pop_back();
 }
 
+void GameState::clear(){
+	stations.clear();
+	rails.clear();
+}
+
 graph_t GameState::get_graph() const{
 	graph_t graph = board.get_graph();
 	

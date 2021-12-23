@@ -7,18 +7,22 @@
 #include "../algorithms/disjoint_sets.h"
 #include "../algorithms/tree_span.h"
 
+#include "game_observer.h"
+
 class GameRound{
 	GameState state;
 	const GameSettings settings;
 	
 	const vector<vector<unsigned int>> player_cities;
+	
+	map<Observer*, unsigned int> observers;
 
 	DisjointSets connectivity;
 
 	void add_rail(int edge_index);
 	void end_turn();
 public:
-	GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities);
+	GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers);
 	
 	const GameState& get_state() const;
 	const GameSettings& get_settings() const;
@@ -28,6 +32,9 @@ public:
 	bool play(const vector<unsigned int> edge_indices);
 	
 	bool check_win(unsigned int player_index) const;
+
+	void add_observer(Observer* observer, unsigned int player_index);
+	void end_round();
 };
 
 #endif

@@ -75,6 +75,8 @@ public:
 	void add_station(unsigned int node_index);
 	void undo_station();
 	
+	void clear();
+	
 	graph_t get_graph() const;
 };
 	
