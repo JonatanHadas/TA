@@ -13,30 +13,31 @@ BoardGeometry::BoardGeometry(
 	city_radius(city_radius),
 	multi_rail_width(multi_rail_width) {}
 	
-unsigned int BoardGeometry::get_width(){
+unsigned int BoardGeometry::get_width() const{
 	return width;
 }
-unsigned int BoardGeometry::get_height(){
+unsigned int BoardGeometry::get_height() const{
 	return height;
 }
 
-const vector<pair<unsigned int, unsigned int>>& BoardGeometry::get_nodes(){
+const vector<pair<unsigned int, unsigned int>>& BoardGeometry::get_nodes() const{
 	return nodes;
 }
 
-unsigned int BoardGeometry::get_city_radius(){
+unsigned int BoardGeometry::get_city_radius() const{
 	return city_radius;
 }
-unsigned int BoardGeometry::get_multi_rail_width(){
+unsigned int BoardGeometry::get_multi_rail_width() const{
 	return multi_rail_width;
 }
 
-void BoardGeometry::serialize(ostream& output){
+void BoardGeometry::serialize(ostream& output) const{
 	write_raw(output, width);
 	write_raw(output, height);
 	write_raw(output, city_radius);
 	write_raw(output, multi_rail_width);
-	write_raw(output, nodes.size());
+	unsigned int node_num = nodes.size();
+	write_raw(output, node_num);
 	for(auto node: nodes){
 		write_raw(output, node.first);
 		write_raw(output, node.second);

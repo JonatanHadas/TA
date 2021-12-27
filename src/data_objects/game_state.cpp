@@ -178,7 +178,7 @@ const vector<unsigned int>& GameState::get_rails() const{
 vector<Edge> GameState::get_rail_edges() const{
 	vector<Edge> rail_edges;
 	
-	for(unsigned int i; i < rails.size(); i++){
+	for(unsigned int i: rails){
 		rail_edges.push_back(board.get_edges()[i]);
 	}
 	

@@ -42,7 +42,7 @@ const vector<unsigned int>& GameRound::get_cities(unsigned int player) const{
 	return player_cities[player];
 }
 
-bool GameRound::place_station(unsigned int node_index){
+bool GameRound::add_station(unsigned int node_index){
 	if(state.get_stations().size() >= settings.get_player_num()) return false;  // All stations placed.
 	
 	if(node_index > state.get_board().get_node_num()) return false;  // Outside board.
@@ -97,13 +97,19 @@ bool GameRound::check_win(unsigned int player_index) const{
 	if(state.get_stations().size() <= player_index) return false;  // Station not placed.
 	
 	unsigned int station_set = connectivity.get_set(state.get_stations()[player_index]);
-	
+		
 	for(unsigned int i = 0; i < player_cities[player_index].size(); i++){
 		unsigned int city = state.get_board().get_cities()[i][player_cities[player_index][i]];
 		if(connectivity.get_set(city) != station_set) return false;
 	}
 	
 	return true;
+}
+bool GameRound::check_win() const{
+	for(unsigned int i = 0; i < settings.get_player_num(); i++){
+		if(check_win(i)) return true;
+	}
+	return false;
 }
 
 void GameRound::add_observer(Observer* observer, unsigned int player_index){

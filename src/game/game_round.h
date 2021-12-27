@@ -7,9 +7,10 @@
 #include "../algorithms/disjoint_sets.h"
 #include "../algorithms/tree_span.h"
 
+#include "player_interface.h"
 #include "game_observer.h"
 
-class GameRound{
+class GameRound : public PlayerInterface{
 	GameState state;
 	const GameSettings settings;
 	
@@ -28,10 +29,11 @@ public:
 	const GameSettings& get_settings() const;
 	const vector<unsigned int>& get_cities(unsigned int player) const;
 	
-	bool place_station(unsigned int node_index);
+	bool add_station(unsigned int node_index);
 	bool play(const vector<unsigned int> edge_indices);
 	
 	bool check_win(unsigned int player_index) const;
+	bool check_win() const;
 
 	void add_observer(Observer* observer, unsigned int player_index);
 	void end_round();

@@ -32,6 +32,6 @@ void DisjointSets::unify(unsigned int member1, unsigned int member2){
     }
     else{
         if(ranks[member1] == ranks[member2]) ranks[member1]++;
-        parents[member2] = member2;
+        parents[member2] = member1;
     }
 }

@@ -2,6 +2,7 @@
 #define _GAME_OBSERVER_H
 
 #include "../data_objects/game_state.h"
+#include "../data_objects/game_settings.h"
 
 class Observer{
 public:
