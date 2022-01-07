@@ -10,17 +10,23 @@
 #include "../game/game_observer.h"
 #include "../data_objects/game_state.h"
 #include "../data_objects/game_settings.h"
+#include "../data_objects/game_score.h"
 #include "../data_objects/board_geometry.h"
 
 class GameStateObserver : public Observer{
 	unique_ptr<GameState> state;
+	unique_ptr<GameState> last_round_state;
+	unique_ptr<GameScore> score;
 	unique_ptr<GameSettings> settings;
 	unsigned int last_rail, last_station;
+	unsigned int last_round_starting_player;
+	unsigned int starting_player;
 	bool in_round;
 		
 	function<void()> update_callback;
 	
 	map<unsigned int, vector<unsigned int>> player_cities;
+	map<unsigned int, vector<unsigned int>> last_round_player_cities;
 	
 	void clear_rails();
 	void clear_stations();
@@ -33,15 +39,22 @@ public:
 	void add_station(unsigned int station_index);
 	void play(const vector<unsigned int>& rails);
 	void set_current_player(unsigned int player);
+	void set_starting_player(unsigned int player);
 	
+	void set_scores(const GameScore& scores);
 	void reveal_player_cities(unsigned int player, const vector<unsigned int>& cities);
 	void end_round();
 	
 	const GameState& get_state() const;
 	const GameSettings& get_settings() const;
+	const GameScore& get_score() const;
 	const map<unsigned int, vector<unsigned int>> get_player_cities() const;
 	bool is_in_round() const;
-	unsigned int get_last_station() const;
+	unsigned int get_last_station() const;	
+	unsigned int get_starting_player() const;
+	
+	void clear_last_round();
+	bool showing_last_round() const;
 		
 	void add_rail(unsigned int edge_index);
 	void undo_rail();

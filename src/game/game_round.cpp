@@ -12,8 +12,8 @@ void GameRound::end_turn(){
 	}
 }
 
-GameRound::GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers) :
-	state(state),
+GameRound::GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers) :
+	state(board, vector<unsigned int>(), vector<unsigned int>(), 0),
 	settings(settings),
 	connectivity(state.get_board().get_node_num()),
 	player_cities(player_cities),
@@ -58,11 +58,12 @@ bool GameRound::add_station(unsigned int node_index){
 	end_turn();
 	return true;
 }
+
 bool GameRound::play(const vector<unsigned int> edge_indices){
 	unsigned int weight = 0;
 	if(state.get_stations().size() < settings.get_player_num()) return false;  // Not all stations placed.
 	
-	set<unsigned int> newly_connected;
+	DisjointSets new_connectivity = connectivity;
 
 	for(auto new_rail: edge_indices){
 		if(new_rail > state.get_board().get_edges().size()) return false;  // Outside board.
@@ -71,16 +72,13 @@ bool GameRound::play(const vector<unsigned int> edge_indices){
 		}
 		
 		Edge edge = state.get_board().get_edges().at(new_rail);
-		unsigned int station_set = connectivity.get_set(state.get_stations().at(state.get_current_player()));
+		unsigned int station_set = new_connectivity.get_set(state.get_stations().at(state.get_current_player()));
 		if(
-			station_set != connectivity.get_set(edge.get_node_a()) &&
-			station_set != connectivity.get_set(edge.get_node_b()) &&
-			newly_connected.find(edge.get_node_a()) == newly_connected.end() &&
-			newly_connected.find(edge.get_node_b()) == newly_connected.end()
+			station_set != new_connectivity.get_set(edge.get_node_a()) &&
+			station_set != new_connectivity.get_set(edge.get_node_b())
 			) return false;
-			
-		newly_connected.insert(edge.get_node_a());
-		newly_connected.insert(edge.get_node_b());
+		
+		new_connectivity.unify(edge.get_node_a(), edge.get_node_b());
 	}
 	
 	for(auto rail: edge_indices){

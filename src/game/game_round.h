@@ -23,7 +23,7 @@ class GameRound : public PlayerInterface{
 	void add_rail(int edge_index);
 	void end_turn();
 public:
-	GameRound(const GameState& state, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers);
+	GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers);
 	
 	const GameState& get_state() const;
 	const GameSettings& get_settings() const;
