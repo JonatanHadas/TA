@@ -9,8 +9,9 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-GameStateObserver::GameStateObserver(function<void()> update_callback) :
+GameStateObserver::GameStateObserver(function<void()> update_callback, function<void()> init_callback) :
 	update_callback(update_callback),
+	init_callback(init_callback),
 	in_round(false),
 	last_rail(0),
 	last_station(0)
@@ -24,6 +25,7 @@ void GameStateObserver::initialize(const GameState& state, const GameSettings& s
 	in_round = true;
 	last_rail = state.get_rails().size();
 	last_station = state.get_stations().size();
+	init_callback();
 	if(NULL == last_round_state.get()) update_callback();
 }
 void GameStateObserver::clear_board(){
@@ -175,21 +177,36 @@ bool GameStateObserver::check_station(unsigned int node_index) const{
 
 
 GameDrawer::GameDrawer() : 
-	observer([this]() {this->set_changed();}),
-	changed(false) {}
+	observer(
+		[this]() {this->set_changed();},
+		[this]() {
+			this->is_initialized = false;
+			this->should_initialize = true;
+			}),
+	changed(false),
+	is_initialized(false),
+	should_initialize(false) {}
 
+#include <iostream>
 void GameDrawer::init(SDL_Renderer* renderer){
-	int output_w, output_h;
-	SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
-	int scaled_w = output_h * observer.get_drawing_data().get_geometry().get_width() / observer.get_drawing_data().get_geometry().get_height();
-	int scaled_h = output_w * observer.get_drawing_data().get_geometry().get_height() / observer.get_drawing_data().get_geometry().get_width();
-	screen_width = max(output_w, scaled_w);
-	screen_height = max(output_h, scaled_h);
-	
-	SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
+	if(should_initialize){
+		int output_w, output_h;
+		SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
+		int scaled_w = output_h * observer.get_drawing_data().get_geometry().get_width() / observer.get_drawing_data().get_geometry().get_height();
+		int scaled_h = output_w * observer.get_drawing_data().get_geometry().get_height() / observer.get_drawing_data().get_geometry().get_width();
+		screen_width = max(output_w, scaled_w);
+		screen_height = max(output_h, scaled_h);
+				
+		SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
+		
+		is_initialized = true;
+		should_initialize = false;
+	}
 }
 
 void GameDrawer::draw(SDL_Renderer* renderer) const{
+	if(!is_initialized) return;
+	
 	SDL_SetRenderDrawColor(renderer, 240, 240, 240, 0);
 	SDL_RenderClear(renderer);
 	
@@ -200,7 +217,7 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	scale_point(x1, y1);
 	scale_point(x2, y2);
-
+	
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
 

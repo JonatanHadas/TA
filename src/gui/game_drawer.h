@@ -24,7 +24,7 @@ class GameStateObserver : public Observer{
 	unsigned int starting_player;
 	bool in_round;
 		
-	function<void()> update_callback;
+	function<void()> update_callback, init_callback;
 	
 	map<unsigned int, vector<unsigned int>> player_cities;
 	map<unsigned int, vector<unsigned int>> last_round_player_cities;
@@ -32,7 +32,7 @@ class GameStateObserver : public Observer{
 	void clear_rails();
 	void clear_stations();
 public:
-	GameStateObserver(function<void()> update_callback);
+	GameStateObserver(function<void()> update_callback, function<void()> init_callback);
 
 	void initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data);
 	void clear_board();
@@ -74,12 +74,14 @@ public:
 class GameDrawer{
 	GameStateObserver observer;
 	bool changed;
+	bool is_initialized, should_initialize;
 	int screen_width, screen_height;
+
 public:
 	GameDrawer();
 	
-	void init(SDL_Renderer* renderer);
 	void draw(SDL_Renderer* renderer) const;
+	void init(SDL_Renderer* renderer);
 	
 	void scale_point(int& x, int& y) const;
 	void unscale_point(int& x, int& y) const;
