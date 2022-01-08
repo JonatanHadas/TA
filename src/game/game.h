@@ -15,6 +15,8 @@ class Game : public PlayerInterface{
 	GameBoard board;
 	unique_ptr<GameRound> round;
 	
+	const DrawingData drawing_data;
+	
 	map<Observer*, unsigned int> observers;
 	
 	void new_round();
@@ -22,7 +24,7 @@ class Game : public PlayerInterface{
 	
 	unsigned int state_player(unsigned int real_player) const;
 public:
-	Game(const GameBoard& board, const GameSettings& settings, map<Observer*, unsigned int>&& observers);
+	Game(const GameBoard& board, const GameSettings& settings, const DrawingData& drawing_data, map<Observer*, unsigned int>&& observers);
 
 	bool add_station(unsigned int node_index);
 	bool play(const vector<unsigned int> edge_indices);

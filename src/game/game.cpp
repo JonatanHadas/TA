@@ -29,7 +29,7 @@ void Game::new_round(){
 		shifted_observers[entry.first] = state_player(entry.second);
 	}
 	
-	round = make_unique<GameRound>(board, settings, player_cities, shifted_observers);
+	round = make_unique<GameRound>(board, settings, player_cities, drawing_data, shifted_observers);
 }
 
 void Game::check_end_round(){
@@ -76,12 +76,13 @@ void Game::check_end_round(){
 	}
 }
 
-Game::Game(const GameBoard& board, const GameSettings& settings, map<Observer*, unsigned int>&& observers) :
+Game::Game(const GameBoard& board, const GameSettings& settings, const DrawingData& drawing_data, map<Observer*, unsigned int>&& observers) :
 	settings(settings),
 	score(settings.get_total_points(), settings.get_player_num()),
 	board(board),
 	starting_player(0),
 	round_num(0),
+	drawing_data(drawing_data),
 	observers(observers){
 	
 	for(auto entry: observers){
@@ -130,7 +131,7 @@ void Game::add_observer(Observer* observer, unsigned int player_index){
 	
 	if(NULL != round.get()) round->add_observer(observer, state_player(player_index));
 	else{
-		observer->initialize(GameState(board, vector<unsigned int>(), vector<unsigned int>(), 0), settings);
+		observer->initialize(GameState(board, vector<unsigned int>(), vector<unsigned int>(), 0), settings, drawing_data);
 		observer->end_round();
 	}
 	observers[observer] = player_index;

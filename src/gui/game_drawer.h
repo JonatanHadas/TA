@@ -11,13 +11,14 @@
 #include "../data_objects/game_state.h"
 #include "../data_objects/game_settings.h"
 #include "../data_objects/game_score.h"
-#include "../data_objects/board_geometry.h"
+#include "../data_objects/drawing_data.h"
 
 class GameStateObserver : public Observer{
 	unique_ptr<GameState> state;
 	unique_ptr<GameState> last_round_state;
 	unique_ptr<GameScore> score;
 	unique_ptr<GameSettings> settings;
+	unique_ptr<DrawingData> drawing_data;
 	unsigned int last_rail, last_station;
 	unsigned int last_round_starting_player;
 	unsigned int starting_player;
@@ -33,7 +34,7 @@ class GameStateObserver : public Observer{
 public:
 	GameStateObserver(function<void()> update_callback);
 
-	void initialize(const GameState& state, const GameSettings& settings);
+	void initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data);
 	void clear_board();
 	
 	void add_station(unsigned int station_index);
@@ -53,6 +54,8 @@ public:
 	unsigned int get_last_station() const;	
 	unsigned int get_starting_player() const;
 	
+	const DrawingData& get_drawing_data() const;
+	
 	void clear_last_round();
 	bool showing_last_round() const;
 		
@@ -70,11 +73,10 @@ public:
 
 class GameDrawer{
 	GameStateObserver observer;
-	BoardGeometry geometry;
 	bool changed;
 	int screen_width, screen_height;
 public:
-	GameDrawer(BoardGeometry geometry);
+	GameDrawer();
 	
 	void init(SDL_Renderer* renderer);
 	void draw(SDL_Renderer* renderer) const;

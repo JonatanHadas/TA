@@ -58,7 +58,8 @@ void GameClient::handle_receive(string data, enet_uint8 channel_id){
 			{
 				GameState state = GameState::deserialize(packet);
 				GameSettings settings = GameSettings::deserialize(packet);
-				observer.initialize(state, settings);
+				DrawingData drawing_data = DrawingData::deserialize(packet);
+				observer.initialize(state, settings, drawing_data);
 			}
 			break;
 		case ObserverMessageType::CLEAR_BOARD:

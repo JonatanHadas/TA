@@ -13,7 +13,7 @@ class NetObserver : public Observer {
 public:
 	NetObserver(Server& server, peer_id_t peer_id);
 
-	void initialize(const GameState& state, const GameSettings& settings);
+	void initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data);
 	void clear_board();
 	
 	void add_station(unsigned int station_index);
@@ -36,7 +36,7 @@ protected:
 	void handle_disconnection(peer_id_t peer_id);
 	void handle_receive(peer_id_t peer_id, string data, enet_uint8 channel_id);
 public:
-	GameServer(enet_uint16 port, size_t peerCount, const GameBoard& board, const GameSettings& settings);
+	GameServer(enet_uint16 port, size_t peerCount, const GameBoard& board, const GameSettings& settings, const DrawingData& drawing_data);
 };
 
 #endif

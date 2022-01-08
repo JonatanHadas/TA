@@ -3,6 +3,7 @@
 
 #include "../data_objects/game_state.h"
 #include "../data_objects/game_settings.h"
+#include "../data_objects/drawing_data.h"
 
 #include "../algorithms/disjoint_sets.h"
 #include "../algorithms/tree_span.h"
@@ -13,6 +14,7 @@
 class GameRound : public PlayerInterface{
 	GameState state;
 	const GameSettings settings;
+	const DrawingData drawing_data;
 	
 	const vector<vector<unsigned int>> player_cities;
 	
@@ -23,7 +25,7 @@ class GameRound : public PlayerInterface{
 	void add_rail(int edge_index);
 	void end_turn();
 public:
-	GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers);
+	GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const DrawingData& drawing_data, const map<Observer*, unsigned int>& observers);
 	
 	const GameState& get_state() const;
 	const GameSettings& get_settings() const;

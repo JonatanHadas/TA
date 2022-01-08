@@ -12,11 +12,12 @@ void GameRound::end_turn(){
 	}
 }
 
-GameRound::GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const map<Observer*, unsigned int>& observers) :
+GameRound::GameRound(const GameBoard& board, const GameSettings& settings, const vector<vector<unsigned int>>& player_cities, const DrawingData& drawing_data, const map<Observer*, unsigned int>& observers) :
 	state(board, vector<unsigned int>(), vector<unsigned int>(), 0),
 	settings(settings),
 	connectivity(state.get_board().get_node_num()),
 	player_cities(player_cities),
+	drawing_data(drawing_data),
 	observers(observers){
 
 	for(Edge edge: state.get_rail_edges()){
@@ -111,7 +112,7 @@ bool GameRound::check_win() const{
 }
 
 void GameRound::add_observer(Observer* observer, unsigned int player_index){
-	observer->initialize(state, settings);
+	observer->initialize(state, settings, drawing_data);
 	if(player_index < settings.get_player_num()){
 		observer->reveal_player_cities(player_index, player_cities[player_index]);
 	}

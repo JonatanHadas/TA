@@ -4,10 +4,11 @@
 #include "../data_objects/game_state.h"
 #include "../data_objects/game_settings.h"
 #include "../data_objects/game_score.h"
+#include "../data_objects/drawing_data.h"
 
 class Observer{
 public:
-	virtual void initialize(const GameState& state, const GameSettings& settings) = 0;
+	virtual void initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data) = 0;
 	virtual void clear_board() = 0;
 	
 	virtual void add_station(unsigned int station_index) = 0;

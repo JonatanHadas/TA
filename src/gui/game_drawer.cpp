@@ -16,9 +16,10 @@ GameStateObserver::GameStateObserver(function<void()> update_callback) :
 	last_station(0)
 	{}
 
-void GameStateObserver::initialize(const GameState& state, const GameSettings& settings){
+void GameStateObserver::initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data){
 	this->state = make_unique<GameState>(state);
 	this->settings = make_unique<GameSettings>(settings);
+	this->drawing_data = make_unique<DrawingData>(drawing_data);
 	if(NULL == score.get()) score = make_unique<GameScore>(settings.get_total_points(), settings.get_player_num());
 	in_round = true;
 	last_rail = state.get_rails().size();
@@ -139,6 +140,10 @@ vector<unsigned int> GameStateObserver::get_added_rails() const{
 	return rails;
 }
 
+const DrawingData& GameStateObserver::get_drawing_data() const{
+	return *drawing_data;
+}
+
 bool GameStateObserver::check_rail(unsigned int player, unsigned int edge_index) const{
 	if(state->get_stations().size() < player) return false;
 	
@@ -169,16 +174,15 @@ bool GameStateObserver::check_station(unsigned int node_index) const{
 }
 
 
-GameDrawer::GameDrawer(BoardGeometry geometry) : 
-	geometry(geometry),
+GameDrawer::GameDrawer() : 
 	observer([this]() {this->set_changed();}),
 	changed(false) {}
 
-	void GameDrawer::init(SDL_Renderer* renderer){
+void GameDrawer::init(SDL_Renderer* renderer){
 	int output_w, output_h;
 	SDL_GetRendererOutputSize(renderer, &output_w, &output_h);
-	int scaled_w = output_h * geometry.get_width() / geometry.get_height();
-	int scaled_h = output_w * geometry.get_height() / geometry.get_width();
+	int scaled_w = output_h * observer.get_drawing_data().get_geometry().get_width() / observer.get_drawing_data().get_geometry().get_height();
+	int scaled_h = output_w * observer.get_drawing_data().get_geometry().get_height() / observer.get_drawing_data().get_geometry().get_width();
 	screen_width = max(output_w, scaled_w);
 	screen_height = max(output_h, scaled_h);
 	
@@ -189,10 +193,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	SDL_SetRenderDrawColor(renderer, 240, 240, 240, 0);
 	SDL_RenderClear(renderer);
 	
-	int x1 = geometry.get_score_line().first.first;
-	int y1 = geometry.get_score_line().first.second;
-	int x2 = geometry.get_score_line().second.first;
-	int y2 = geometry.get_score_line().second.second;
+	int x1 = observer.get_drawing_data().get_geometry().get_score_line().first.first;
+	int y1 = observer.get_drawing_data().get_geometry().get_score_line().first.second;
+	int x2 = observer.get_drawing_data().get_geometry().get_score_line().second.first;
+	int y2 = observer.get_drawing_data().get_geometry().get_score_line().second.second;
 	
 	scale_point(x1, y1);
 	scale_point(x2, y2);
@@ -204,15 +208,15 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 
 	Texture city(renderer,
 		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		2 * geometry.get_city_radius(), 2 * geometry.get_city_radius()
+		2 * observer.get_drawing_data().get_geometry().get_city_radius(), 2 * observer.get_drawing_data().get_geometry().get_city_radius()
 		);
 	Texture station(renderer,
 		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		geometry.get_city_radius(), geometry.get_city_radius()
+		observer.get_drawing_data().get_geometry().get_city_radius(), observer.get_drawing_data().get_geometry().get_city_radius()
 		);
 	Texture barrier(renderer,
 		SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET,
-		geometry.get_multi_rail_width(), geometry.get_city_radius()
+		observer.get_drawing_data().get_geometry().get_multi_rail_width(), observer.get_drawing_data().get_geometry().get_city_radius()
 		);
 		
 	SDL_SetRenderTarget(renderer, city.get());
@@ -220,14 +224,14 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	draw_circle(renderer, geometry.get_city_radius(), geometry.get_city_radius(), geometry.get_city_radius());
+	draw_circle(renderer, observer.get_drawing_data().get_geometry().get_city_radius(), observer.get_drawing_data().get_geometry().get_city_radius(), observer.get_drawing_data().get_geometry().get_city_radius());
 	
 	SDL_SetRenderTarget(renderer, station.get());
 	SDL_SetTextureBlendMode(station.get(), SDL_BLENDMODE_BLEND);
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-	draw_circle(renderer, 0.5 * geometry.get_city_radius(), 0.5 * geometry.get_city_radius(), 0.5 * geometry.get_city_radius());
+	draw_circle(renderer, 0.5 * observer.get_drawing_data().get_geometry().get_city_radius(), 0.5 * observer.get_drawing_data().get_geometry().get_city_radius(), 0.5 * observer.get_drawing_data().get_geometry().get_city_radius());
 
 	SDL_SetRenderTarget(renderer, barrier.get());
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
@@ -237,8 +241,8 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	for(Edge edge: observer.get_state().get_board().get_edges()){
-		auto node_a = geometry.get_nodes().at(edge.get_node_a());
-		auto node_b = geometry.get_nodes().at(edge.get_node_b());
+		auto node_a = observer.get_drawing_data().get_geometry().get_nodes().at(edge.get_node_a());
+		auto node_b = observer.get_drawing_data().get_geometry().get_nodes().at(edge.get_node_b());
 		
 		double length = sqrt(
 			(node_a.first - node_b.first) * (node_a.first - node_b.first) +
@@ -246,17 +250,17 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 			);
 			
 		pair<double, double> node_b2(
-			((node_a.first * 0.5 * geometry.get_city_radius()) + (node_b.first * (length - 0.5 * geometry.get_city_radius()))) / length,
-			((node_a.second * 0.5 * geometry.get_city_radius()) + (node_b.second * (length - 0.5 * geometry.get_city_radius()))) / length
+			((node_a.first * 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()) + (node_b.first * (length - 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()))) / length,
+			((node_a.second * 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()) + (node_b.second * (length - 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()))) / length
 			);
 		pair<double, double> node_a2(
-			((node_b.first * 0.5 * geometry.get_city_radius()) + (node_a.first * (length - 0.5 * geometry.get_city_radius()))) / length,
-			((node_b.second * 0.5 * geometry.get_city_radius()) + (node_a.second * (length - 0.5 * geometry.get_city_radius()))) / length
+			((node_b.first * 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()) + (node_a.first * (length - 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()))) / length,
+			((node_b.second * 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()) + (node_a.second * (length - 0.5 * observer.get_drawing_data().get_geometry().get_city_radius()))) / length
 			);
 			
 		pair<double, double> offset(
-			(int)(node_b.second - node_a.second) / length * geometry.get_multi_rail_width() / edge.get_weight() / 2,
-			(int)(node_a.first - node_b.first) / length * geometry.get_multi_rail_width() / edge.get_weight() / 2
+			(int)(node_b.second - node_a.second) / length * observer.get_drawing_data().get_geometry().get_multi_rail_width() / edge.get_weight() / 2,
+			(int)(node_a.first - node_b.first) / length * observer.get_drawing_data().get_geometry().get_multi_rail_width() / edge.get_weight() / 2
 			);
 
 		if(edge.get_weight() % 2){
@@ -297,10 +301,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	for(unsigned int i = 0; i < observer.get_state().get_board().get_cities().size(); i++){
 		for(unsigned int node_index: observer.get_state().get_board().get_cities().at(i)){
 
-			auto node = geometry.get_nodes().at(node_index);
+			auto node = observer.get_drawing_data().get_geometry().get_nodes().at(node_index);
 			
 			SDL_Rect src, dst;
-			src.w = dst.w = src.h = dst.h = 2 * geometry.get_city_radius();
+			src.w = dst.w = src.h = dst.h = 2 * observer.get_drawing_data().get_geometry().get_city_radius();
 			src.x = src.y = 0;
 			dst.x = node.first - dst.w / 2;
 			dst.y = node.second - dst.h / 2;
@@ -321,10 +325,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		unsigned int player_index = entry.first;
 		for(unsigned int i = 0; i < entry.second.size(); i++){
 			unsigned node_index = observer.get_state().get_board().get_cities().at(i).at(entry.second.at(i));
-			auto node = geometry.get_nodes().at(node_index);
+			auto node = observer.get_drawing_data().get_geometry().get_nodes().at(node_index);
 			
 			SDL_Rect rect;
-			rect.w = rect.h = geometry.get_city_radius();
+			rect.w = rect.h = observer.get_drawing_data().get_geometry().get_city_radius();
 			rect.x = node.first - rect.w / 2;
 			rect.y = node.second - rect.h / 2;
 			
@@ -340,8 +344,8 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
 	for(auto edge: observer.get_state().get_rail_edges()){
-		auto node_a = geometry.get_nodes().at(edge.get_node_a());
-		auto node_b = geometry.get_nodes().at(edge.get_node_b());
+		auto node_a = observer.get_drawing_data().get_geometry().get_nodes().at(edge.get_node_a());
+		auto node_b = observer.get_drawing_data().get_geometry().get_nodes().at(edge.get_node_b());
 		
 		double length = sqrt(
 			(node_a.first - node_b.first) * (node_a.first - node_b.first) +
@@ -353,10 +357,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		center.y = (node_a.second + node_b.second) / 2;
 		
 		SDL_Rect src, dst;
-		src.w = dst.w = length - geometry.get_city_radius();
-		src.w = dst.w = length - geometry.get_city_radius();
-		src.w = dst.w = length - geometry.get_city_radius();
-		src.h = dst.h = geometry.get_multi_rail_width();
+		src.w = dst.w = length - observer.get_drawing_data().get_geometry().get_city_radius();
+		src.w = dst.w = length - observer.get_drawing_data().get_geometry().get_city_radius();
+		src.w = dst.w = length - observer.get_drawing_data().get_geometry().get_city_radius();
+		src.h = dst.h = observer.get_drawing_data().get_geometry().get_multi_rail_width();
 		src.x = src.y = 0;
 		dst.x = center.x - src.w / 2;
 		dst.y = center.y - src.h / 2;
@@ -382,10 +386,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	for(unsigned int i = 0; i < observer.get_state().get_stations().size(); i++){
 		unsigned int node_index = observer.get_state().get_stations().at(i);
-		auto node = geometry.get_nodes().at(node_index);
+		auto node = observer.get_drawing_data().get_geometry().get_nodes().at(node_index);
 		
 		SDL_Rect src, dst;
-		src.w = dst.w = src.h = dst.h = geometry.get_city_radius();
+		src.w = dst.w = src.h = dst.h = observer.get_drawing_data().get_geometry().get_city_radius();
 		src.x = src.y = 0;
 		dst.x = node.first - dst.w / 2;
 		dst.y = node.second - dst.h / 2;
@@ -400,10 +404,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	}
 	
 	int total_score = observer.get_settings().get_total_points();
-	int start_x = geometry.get_score_line().first.first;
-	int start_y = geometry.get_score_line().first.second;
-	int end_x = geometry.get_score_line().second.first;
-	int end_y = geometry.get_score_line().second.second;
+	int start_x = observer.get_drawing_data().get_geometry().get_score_line().first.first;
+	int start_y = observer.get_drawing_data().get_geometry().get_score_line().first.second;
+	int end_x = observer.get_drawing_data().get_geometry().get_score_line().second.first;
+	int end_y = observer.get_drawing_data().get_geometry().get_score_line().second.second;
 
 	double length = distance(start_x, end_x, start_y, end_y);
 	pair<double, double> offset(
@@ -416,10 +420,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		int center_x = (start_x * (2 * i + 1) + end_x * (2 * total_score - 2 * i + 1)) / (total_score + 1) / 2;
 		int center_y = (start_y * (2 * i + 1) + end_y * (2 * total_score - 2 * i + 1)) / (total_score + 1) / 2;
 		
-		int x1 = center_x + (offset.first * geometry.get_city_radius() / 2);
-		int y1 = center_y + (offset.second * geometry.get_city_radius() / 2);
-		int x2 = center_x - (offset.first * geometry.get_city_radius() / 2);
-		int y2 = center_y - (offset.second * geometry.get_city_radius() / 2);
+		int x1 = center_x + (offset.first * observer.get_drawing_data().get_geometry().get_city_radius() / 2);
+		int y1 = center_y + (offset.second * observer.get_drawing_data().get_geometry().get_city_radius() / 2);
+		int x2 = center_x - (offset.first * observer.get_drawing_data().get_geometry().get_city_radius() / 2);
+		int y2 = center_y - (offset.second * observer.get_drawing_data().get_geometry().get_city_radius() / 2);
 		
 		scale_point(x1, y1);
 		scale_point(x2, y2);
@@ -442,10 +446,10 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		for(int i = 0; i < num; i++){
 			int offset_mul = 1 - num + 2 * i;
 			SDL_Rect rect;
-			rect.h = rect.w = geometry.get_city_radius();
+			rect.h = rect.w = observer.get_drawing_data().get_geometry().get_city_radius();
 			rect.h /= 2;
-			rect.x = center_x + offset_mul * (offset.first * geometry.get_city_radius() / 6);
-			rect.y = center_y + offset_mul * (offset.second * geometry.get_city_radius() / 6);
+			rect.x = center_x + offset_mul * (offset.first * observer.get_drawing_data().get_geometry().get_city_radius() / 6);
+			rect.y = center_y + offset_mul * (offset.second * observer.get_drawing_data().get_geometry().get_city_radius() / 6);
 			
 			scale_point(rect.x, rect.y);
 			scale_point(rect.w, rect.h);
@@ -459,8 +463,8 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	double angle = atan2(start_x - end_x, start_y - end_y) * 180 / M_PI;
 	SDL_Rect src, dst;
-	src.w = dst.w = geometry.get_city_radius() * 2;
-	src.h = dst.h = geometry.get_multi_rail_width();
+	src.w = dst.w = observer.get_drawing_data().get_geometry().get_city_radius() * 2;
+	src.h = dst.h = observer.get_drawing_data().get_geometry().get_multi_rail_width();
 	src.x = src.y = 0;
 	dst.x = (end_x * (2 * observer.get_score().get_threshold() + 1) + start_x * (2 * total_score - 2 * observer.get_score().get_threshold() + 1)) / (total_score + 1) / 2;
 	dst.y = (end_y * (2 * observer.get_score().get_threshold() + 1) + start_y * (2 * total_score - 2 * observer.get_score().get_threshold() + 1)) / (total_score + 1) / 2;
@@ -474,14 +478,14 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 }
 void GameDrawer::scale_point(int& x, int& y) const{
 	x *= screen_width;
-	x /= geometry.get_width();
+	x /= observer.get_drawing_data().get_geometry().get_width();
 	y *= screen_height;
-	y /= geometry.get_height();
+	y /= observer.get_drawing_data().get_geometry().get_height();
 }
 void GameDrawer::unscale_point(int& x, int& y) const{
-	x *= geometry.get_width();
+	x *= observer.get_drawing_data().get_geometry().get_width();
 	x /= screen_width;
-	y *= geometry.get_height();
+	y *= observer.get_drawing_data().get_geometry().get_height();
 	y /= screen_height;
 }
 

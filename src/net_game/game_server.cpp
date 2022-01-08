@@ -9,12 +9,13 @@ NetObserver::NetObserver(Server& server, peer_id_t peer_id) :
 	server(&server),
 	peer_id(peer_id) {}
 
-void NetObserver::initialize(const GameState& state, const GameSettings& settings){
+void NetObserver::initialize(const GameState& state, const GameSettings& settings, const DrawingData& drawing_data){
 	ostringstream packet(ios_base::binary);
 	write_raw(packet, ObserverMessageType::INITIALIZE);
 	
 	state.serialize(packet);
 	settings.serialize(packet);
+	drawing_data.serialize(packet);
 	
 	server->send_packet(peer_id, packet.str(), (enet_uint8)Channel::OBSERVING, ENET_PACKET_FLAG_RELIABLE);
 }
@@ -82,8 +83,8 @@ void NetObserver::end_round(){
 	server->send_packet(peer_id, packet.str(), (enet_uint8)Channel::OBSERVING, ENET_PACKET_FLAG_RELIABLE);
 }
 
-GameServer::GameServer(enet_uint16 port, size_t peerCount, const GameBoard& board, const GameSettings& settings) :
-	game(board, settings, map<Observer*, unsigned int>()),
+GameServer::GameServer(enet_uint16 port, size_t peerCount, const GameBoard& board, const GameSettings& settings, const DrawingData& drawing_data) :
+	game(board, settings, drawing_data, map<Observer*, unsigned int>()),
 	Server(port, peerCount, 2) {}
 
 void GameServer::handle_connection(peer_id_t peer_id){
