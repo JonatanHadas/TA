@@ -36,6 +36,7 @@ public:
 	bool check_win() const;
 
 	void add_observer(Observer* observer, unsigned int player_index);
+	void remove_observer(Observer* observer);
 	void end_round();
 };
 

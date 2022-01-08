@@ -117,6 +117,9 @@ void GameRound::add_observer(Observer* observer, unsigned int player_index){
 	}
 	observers[observer] = player_index;
 }
+void GameRound::remove_observer(Observer* observer){
+	observers.erase(observer);
+}
 void GameRound::end_round(){
 	for(auto entry: observers){
 		entry.first->end_round();

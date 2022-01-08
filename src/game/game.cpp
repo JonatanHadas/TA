@@ -136,6 +136,10 @@ void Game::add_observer(Observer* observer, unsigned int player_index){
 	observers[observer] = player_index;
 }
 
+void Game::remove_observer(Observer* observer){
+	observers.erase(observer);
+}
+
 const GameRound* Game::get_round() const{
 	return round.get();
 }

@@ -30,7 +30,8 @@ public:
 	bool add_station(unsigned int player, unsigned int node_index);
 	bool play(unsigned int player, const vector<unsigned int> edge_indices);
 	
-	void add_observer(Observer* observer, unsigned int player_index);	
+	void add_observer(Observer* observer, unsigned int player_index);
+	void remove_observer(Observer* observer);	
 	
 	const GameRound* get_round() const;
 	const GameSettings& get_settings() const;
