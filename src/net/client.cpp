@@ -1,5 +1,4 @@
 #include "client.h"
-#include "network_consts.h"
 
 void Client::disconnect_now(){
 	if(NULL != peer) enet_peer_disconnect_now(peer, (enet_uint32)DisconnectionType::DECONSTRUCTION);
@@ -8,7 +7,8 @@ void Client::disconnect_now(){
 Client::Client(const ENetAddress& address, size_t channelLimit) :
 	host(1, channelLimit),
 	peer(NULL) {
-			
+	
+	error = DisconnectionType::CONNECTION_ERROR;
 	if(host.get() != NULL) peer = enet_host_connect(host.get(), &address, channelLimit, 0);
 }
 
@@ -18,6 +18,7 @@ Client::~Client(){
 
 Client::Client(Client&& client) :
 	host(move(client.host)),
+	error(client.error),
 	peer(client.peer) {
 	
 	client.peer = NULL;
@@ -25,6 +26,7 @@ Client::Client(Client&& client) :
 
 Client& Client::operator=(Client&& client){
 	host = move(client.host);
+	error = client.error;
 	
 	disconnect_now();
 	peer = client.peer;
@@ -53,6 +55,7 @@ int Client::handle_event(enet_uint32 timeout){
 		case ENET_EVENT_TYPE_DISCONNECT:
 			if(event.peer == peer){
 				peer = NULL;
+				error = (DisconnectionType)event.data;
 				handle_disconnection();
 			}
 			break;
@@ -68,6 +71,9 @@ int Client::handle_event(enet_uint32 timeout){
 
 bool Client::has_error() const{
 	return NULL == peer;
+}
+DisconnectionType Client::get_error() const{
+	return error;
 }
 
 void Client::disconnect(){
@@ -86,6 +92,7 @@ void Client::disconnect(){
 			break;
 		case ENET_EVENT_TYPE_DISCONNECT:			
 			if(peer == event.peer){
+				error = DisconnectionType::SOFT;
 				peer = NULL;
 				return;
 			}

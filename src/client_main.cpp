@@ -90,7 +90,27 @@ int main(int argc, char** argv){
 	
 	while(true){
 		if(client.has_error()){
-			cerr << "Network error" << endl;
+			switch(client.get_error()){
+			case DisconnectionType::DECONSTRUCTION:
+				cerr << "Server was destroyed";
+				break;
+			case DisconnectionType::UNWANTED:
+				cerr << "Connection rejected by server";
+				break;
+			case DisconnectionType::SOFT:
+				cerr << "Server disconnected";
+				break;
+			case DisconnectionType::CLOSING:
+				cerr << "Server is closed";
+				break;
+			case DisconnectionType::CONNECTION_ERROR:
+				cerr << "Could not connect";
+				break;
+			default:
+				cerr << "Connection reset by server";
+				break;
+			}
+			cerr << endl;
 			return 5;
 		}
 		
@@ -104,6 +124,9 @@ int main(int argc, char** argv){
 			if(!gui.handle_event(event)) return 0;
 		}
 		
-		client.handle_event(100);
+		if(client.handle_event(100) < 0){
+			cerr << "Network error" << endl;
+			return 6;
+		}
 	}
 }

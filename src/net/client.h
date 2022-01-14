@@ -2,11 +2,14 @@
 #define _CLIENT_H
 
 #include "enet_wrapper.h"
+#include "network_consts.h"
 
 class Client{
 	NetHost host;
 	ENetPeer* peer;
 	void disconnect_now();
+	
+	DisconnectionType error;
 	
 protected:
 	virtual void handle_connection() = 0;
@@ -28,6 +31,7 @@ public:
 	int handle_event(enet_uint32 timeout);
 	
 	bool has_error() const;
+	DisconnectionType get_error() const;
 	
 	void disconnect();
 };

@@ -2,10 +2,11 @@
 #define _NETWORK_CONSTS
 
 enum class DisconnectionType : unsigned int{
-	DECONSTRUCTION = 0,
-	UNWANTED = 1,
-	SOFT = 2,
-	CLOSING = 3
+	DECONSTRUCTION = 1,
+	UNWANTED = 2,
+	SOFT = 3,
+	CLOSING = 4,
+	CONNECTION_ERROR = 5
 };
 
 #endif
