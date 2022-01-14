@@ -12,6 +12,8 @@ class GameGui{
 	
 	bool last_rail_pending;
 	
+	unsigned int player;
+	
 	bool handle_key_event(const SDL_KeyboardEvent& event);
 	bool handle_mouse_motion(const SDL_MouseMotionEvent& event);
 	bool handle_mouse_button(const SDL_MouseButtonEvent& event);
@@ -20,7 +22,7 @@ class GameGui{
 	void place_station(unsigned int mouse_x, unsigned int mouse_y);
 	void add_rail(unsigned int mouse_x, unsigned int mouse_y);
 public:
-	GameGui();
+	GameGui(unsigned int player);
 
 	Observer& get_observer();
 	void set_player_interface(PlayerInterface* interface);

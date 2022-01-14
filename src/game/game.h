@@ -23,6 +23,7 @@ class Game : public PlayerInterface{
 	void check_end_round();
 	
 	unsigned int state_player(unsigned int real_player) const;
+	unsigned int real_player(unsigned int state_player) const;
 public:
 	Game(const GameBoard& board, const GameSettings& settings, const DrawingData& drawing_data, map<Observer*, unsigned int>&& observers);
 

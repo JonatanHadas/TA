@@ -6,7 +6,8 @@
 #include "../game/game_observer.h"
 
 class GameClient : public Client, public PlayerInterface{
-	Observer& observer;
+	Observer* observer;
+	unsigned int player;
 protected:
 	void handle_connection();
 	void handle_disconnection();

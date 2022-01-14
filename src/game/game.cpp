@@ -7,6 +7,9 @@
 unsigned int Game::state_player(unsigned int real_player) const{
 	return (real_player + settings.get_player_num() - starting_player) % settings.get_player_num();
 }
+unsigned int Game::real_player(unsigned int state_player) const{
+	return (state_player + starting_player) % settings.get_player_num();
+}
 
 void Game::new_round(){
 	if(NULL != round.get()) return;
@@ -43,12 +46,12 @@ void Game::check_end_round(){
 		const graph_t graph = round->get_state().get_graph();
 		
 		for(unsigned int player = 0; player < settings.get_player_num(); player++){
-			vector<unsigned int> cities = round->get_cities(player);
+			vector<unsigned int> cities = round->get_cities(state_player(player));
 			vector<unsigned int> nodes;
 			for(unsigned int city_group = 0; city_group < cities.size(); city_group++){
 				nodes.push_back(round->get_state().get_board().get_cities().at(city_group).at(cities[city_group]));
 			}
-			if(round->get_state().get_stations().size() > player) nodes.push_back(round->get_state().get_stations().at(player));
+			if(round->get_state().get_stations().size() > state_player(player)) nodes.push_back(round->get_state().get_stations().at(state_player(player)));
 			
 			round_scores.push_back(min_connection_size(graph, move(nodes)));
 		}
@@ -64,10 +67,10 @@ void Game::check_end_round(){
 		
 		round = NULL;
 		if(!score.is_finished()){
-			new_round();
-
 			starting_player++;
 			starting_player %= settings.get_player_num();
+
+			new_round();
 			
 			for(auto entry: observers){
 				entry.first->set_starting_player(starting_player);
@@ -116,12 +119,12 @@ bool Game::play(const vector<unsigned int> edge_indices){
 
 bool Game::add_station(unsigned int player, unsigned int node_index){
 	if(NULL == round.get()) return false;
-	if(round->get_state().get_current_player() != state_player(player)) return false;
+	if(real_player(round->get_state().get_current_player()) != player) return false;
 	return add_station(node_index);
 }
 bool Game::play(unsigned int player, const vector<unsigned int> edge_indices){
 	if(NULL == round.get()) return false;
-	if(round->get_state().get_current_player() != state_player(player)) return false;
+	if(real_player(round->get_state().get_current_player()) != player) return false;
 	return play(edge_indices);
 }
 
@@ -139,6 +142,7 @@ void Game::add_observer(Observer* observer, unsigned int player_index){
 
 void Game::remove_observer(Observer* observer){
 	observers.erase(observer);
+	if(NULL != round.get()) round->remove_observer(observer);
 }
 
 const GameRound* Game::get_round() const{

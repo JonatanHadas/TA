@@ -2,8 +2,9 @@
 
 #include "../utils/geometry.h"
 
-GameGui::GameGui() :
+GameGui::GameGui(unsigned int player) :
 	interface(NULL),
+	player(player),
 	last_rail_pending(false) {}
 
 Observer& GameGui::get_observer(){
@@ -37,7 +38,7 @@ bool GameGui::handle_key_event(const SDL_KeyboardEvent& event){
 			if(drawer.get_observer().showing_last_round()){
 				drawer.get_observer().clear_last_round();
 			}
-			else{
+			else if(drawer.get_observer().get_real_player(drawer.get_observer().get_state().get_current_player()) == player || player == -1){
 				commit_rails();
 			}
 		}
@@ -49,7 +50,9 @@ bool GameGui::handle_key_event(const SDL_KeyboardEvent& event){
 	return true;
 }
 bool GameGui::handle_mouse_motion(const SDL_MouseMotionEvent& event){
-	if(drawer.get_observer().is_in_round() && !drawer.get_observer().showing_last_round()){
+	if(		drawer.get_observer().is_in_round() &&
+			!drawer.get_observer().showing_last_round() &&
+			(drawer.get_observer().get_real_player(drawer.get_observer().get_state().get_current_player()) == player || player == -1)){
 		int mouse_x = event.x;
 		int mouse_y = event.y;
 		drawer.unscale_point(mouse_x, mouse_y);
@@ -69,7 +72,7 @@ bool GameGui::handle_mouse_button(const SDL_MouseButtonEvent& event){
 			if(drawer.get_observer().showing_last_round()){
 				drawer.get_observer().clear_last_round();
 			}
-			else{
+			else if(drawer.get_observer().get_real_player(drawer.get_observer().get_state().get_current_player()) == player || player == -1){
 				if(drawer.get_observer().get_last_station() < drawer.get_observer().get_settings().get_player_num()){
 				if(drawer.get_observer().get_added_station() != drawer.get_observer().get_state().get_board().get_node_num())
 					if(interface != NULL) interface->add_station(drawer.get_observer().get_added_station());

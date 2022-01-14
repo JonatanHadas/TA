@@ -27,6 +27,8 @@ public:
 
 	int handle_event(enet_uint32 timeout);
 	
+	bool has_error() const;
+	
 	void disconnect();
 };
 

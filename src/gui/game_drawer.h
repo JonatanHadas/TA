@@ -53,6 +53,8 @@ public:
 	bool is_in_round() const;
 	unsigned int get_last_station() const;	
 	unsigned int get_starting_player() const;
+	unsigned int get_state_player(unsigned int real_player) const;
+	unsigned int get_real_player(unsigned int state_player) const;
 	
 	const DrawingData& get_drawing_data() const;
 	

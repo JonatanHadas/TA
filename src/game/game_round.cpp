@@ -59,7 +59,6 @@ bool GameRound::add_station(unsigned int node_index){
 	end_turn();
 	return true;
 }
-
 bool GameRound::play(const vector<unsigned int> edge_indices){
 	unsigned int weight = 0;
 	if(state.get_stations().size() < settings.get_player_num()) return false;  // Not all stations placed.
@@ -85,6 +84,7 @@ bool GameRound::play(const vector<unsigned int> edge_indices){
 	for(auto rail: edge_indices){
 		add_rail(rail);
 	}
+
 	for(auto entry: observers){
 		entry.first->play(edge_indices);
 	}
@@ -121,6 +121,7 @@ void GameRound::add_observer(Observer* observer, unsigned int player_index){
 void GameRound::remove_observer(Observer* observer){
 	observers.erase(observer);
 }
+
 void GameRound::end_round(){
 	for(auto entry: observers){
 		entry.first->end_round();

@@ -9,6 +9,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
+#include <iostream>
 GameStateObserver::GameStateObserver(function<void()> update_callback, function<void()> init_callback) :
 	update_callback(update_callback),
 	init_callback(init_callback),
@@ -40,7 +41,7 @@ void GameStateObserver::clear_board(){
 }
 
 void GameStateObserver::clear_rails(){
-	while(last_rail > state->get_rails().size()) state->undo_rail();
+	while(last_rail < state->get_rails().size()) state->undo_rail();
 }
 void GameStateObserver::clear_stations(){
 	while(last_station < state->get_stations().size()){
@@ -63,6 +64,8 @@ void GameStateObserver::play(const vector<unsigned int>& rails){
 }
 void GameStateObserver::set_current_player(unsigned int player){
 	state->set_current_player(player);
+	clear_rails();
+	clear_stations();
 	if(NULL == last_round_state.get()) update_callback();
 }
 void GameStateObserver::set_starting_player(unsigned int player){
@@ -76,6 +79,7 @@ void GameStateObserver::set_scores(const GameScore& scores){
 }
 void GameStateObserver::reveal_player_cities(unsigned int player, const vector<unsigned int>& cities){
 	player_cities[player] = cities;
+	cout << "reveal " << player << endl;
 	if(NULL == last_round_state.get()) update_callback();
 }
 void GameStateObserver::end_round(){
@@ -107,6 +111,12 @@ unsigned int GameStateObserver::get_starting_player() const{
 	if(NULL == last_round_state.get()) return starting_player;
 	return last_round_starting_player;
 }
+unsigned int GameStateObserver::get_state_player(unsigned int real_player) const{
+	return (get_settings().get_player_num() + real_player - get_starting_player()) % get_settings().get_player_num();
+}
+unsigned int GameStateObserver::get_real_player(unsigned int state_player) const{
+	return (state_player + get_starting_player()) % get_settings().get_player_num();
+}
 
 void GameStateObserver::clear_last_round(){
 	last_round_state = NULL;
@@ -122,6 +132,7 @@ void GameStateObserver::add_rail(unsigned int edge_index){
 }
 void GameStateObserver::undo_rail(){
 	if(last_rail < state->get_rails().size()) state->undo_rail();
+	if(NULL == last_round_state.get()) update_callback();
 }
 
 void GameStateObserver::place_station(unsigned int node_index){
@@ -187,7 +198,6 @@ GameDrawer::GameDrawer() :
 	is_initialized(false),
 	should_initialize(false) {}
 
-#include <iostream>
 void GameDrawer::init(SDL_Renderer* renderer){
 	if(should_initialize){
 		int output_w, output_h;
@@ -196,7 +206,7 @@ void GameDrawer::init(SDL_Renderer* renderer){
 		int scaled_h = output_w * observer.get_drawing_data().get_geometry().get_height() / observer.get_drawing_data().get_geometry().get_width();
 		screen_width = max(output_w, scaled_w);
 		screen_height = max(output_h, scaled_h);
-				
+						
 		SDL_RenderSetLogicalSize(renderer, screen_width, screen_height);
 		
 		is_initialized = true;
@@ -209,6 +219,20 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 	
 	SDL_SetRenderDrawColor(renderer, 240, 240, 240, 0);
 	SDL_RenderClear(renderer);
+	
+	SDL_Rect rect;
+	rect.w = observer.get_drawing_data().get_geometry().get_width();
+	rect.h = observer.get_drawing_data().get_geometry().get_city_radius();
+	rect.x = 0;
+	rect.y = observer.get_drawing_data().get_geometry().get_height() - rect.h;
+	
+	scale_point(rect.x, rect.y);
+	scale_point(rect.w, rect.h);
+	
+	SDL_Color color = player_colors[observer.get_real_player(observer.get_state().get_current_player())];
+	SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 0);
+	
+	SDL_RenderFillRect(renderer, &rect);
 	
 	int x1 = observer.get_drawing_data().get_geometry().get_score_line().first.first;
 	int y1 = observer.get_drawing_data().get_geometry().get_score_line().first.second;
@@ -351,8 +375,8 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 			
 			scale_point(rect.w, rect.h);
 			scale_point(rect.x, rect.y);
-			
-			SDL_Color color = player_colors[(player_index + observer.get_starting_player()) % observer.get_settings().get_player_num()];
+
+			SDL_Color color = player_colors[observer.get_real_player(player_index)];
 			
 			SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, 0);
 			SDL_RenderFillRect(renderer, &rect);
@@ -414,7 +438,7 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		scale_point(dst.w, dst.h);
 		scale_point(dst.x, dst.y);
 		
-		SDL_Color color = player_colors[(i + observer.get_starting_player()) % observer.get_settings().get_player_num()];
+		SDL_Color color = player_colors[observer.get_real_player(i)];
 
 		SDL_SetTextureColorMod(station.get(),  color.r, color.g, color.b);
 		SDL_RenderCopy(renderer, station.get(), &src, &dst);
@@ -463,10 +487,13 @@ void GameDrawer::draw(SDL_Renderer* renderer) const{
 		for(int i = 0; i < num; i++){
 			int offset_mul = 1 - num + 2 * i;
 			SDL_Rect rect;
-			rect.h = rect.w = observer.get_drawing_data().get_geometry().get_city_radius();
+			rect.h = rect.w = observer.get_drawing_data().get_geometry().get_city_radius() * 2;
 			rect.h /= 2;
 			rect.x = center_x + offset_mul * (offset.first * observer.get_drawing_data().get_geometry().get_city_radius() / 6);
 			rect.y = center_y + offset_mul * (offset.second * observer.get_drawing_data().get_geometry().get_city_radius() / 6);
+			
+			rect.x -= rect.w / 2;
+			rect.y -= rect.h / 2;
 			
 			scale_point(rect.x, rect.y);
 			scale_point(rect.w, rect.h);

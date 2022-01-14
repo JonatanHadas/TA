@@ -66,6 +66,10 @@ int Client::handle_event(enet_uint32 timeout){
 	return result;
 }
 
+bool Client::has_error() const{
+	return NULL == peer;
+}
+
 void Client::disconnect(){
 	if(peer != NULL){
 		enet_peer_disconnect_later(peer, (enet_uint32)DisconnectionType::SOFT);

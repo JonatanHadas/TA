@@ -11,13 +11,8 @@
 
 GameClient::GameClient(const ENetAddress& address, unsigned int player, Observer& observer) :
 	Client(address, 2),
-	observer(observer) {
-	
-	ostringstream packet(ios_base::binary);
-	write_raw(packet, player);
-	
-	send_packet(packet.str(), (enet_uint8)Channel::OBSERVING, ENET_PACKET_FLAG_RELIABLE);
-}
+	observer(&observer),
+	player(player) {}
 
 bool GameClient::add_station(unsigned int node_index){
 	ostringstream packet(ios_base::binary);
@@ -42,10 +37,12 @@ bool GameClient::play(vector<unsigned int> edge_indices){
 }
 
 void GameClient::handle_connection(){
+	ostringstream packet(ios_base::binary);
+	write_raw(packet, player);
 	
+	send_packet(packet.str(), (enet_uint8)Channel::OBSERVING, ENET_PACKET_FLAG_RELIABLE);
 }
 void GameClient::handle_disconnection(){
-	
 }
 void GameClient::handle_receive(string data, enet_uint8 channel_id){
 	Channel channel = (Channel)channel_id;
@@ -59,51 +56,51 @@ void GameClient::handle_receive(string data, enet_uint8 channel_id){
 				GameState state = GameState::deserialize(packet);
 				GameSettings settings = GameSettings::deserialize(packet);
 				DrawingData drawing_data = DrawingData::deserialize(packet);
-				observer.initialize(state, settings, drawing_data);
+				observer->initialize(state, settings, drawing_data);
 			}
 			break;
 		case ObserverMessageType::CLEAR_BOARD:
-			observer.clear_board();
+			observer->clear_board();
 			break;
 		case ObserverMessageType::ADD_STATION:
 			{
 				auto station_index = read_raw<unsigned int>(packet);
-				observer.add_station(station_index);
+				observer->add_station(station_index);
 			}
 			break;
 		case ObserverMessageType::PLAY:
 			{
 				auto rails = read_vector<unsigned int>(packet, read_raw<unsigned int>);
-				observer.play(rails);
+				observer->play(rails);
 			}
 			break;
 		case ObserverMessageType::SET_CURRENT_PLAYER:
 			{
 				auto player = read_raw<unsigned int>(packet);
-				observer.set_current_player(player);
+				observer->set_current_player(player);
 			}
 			break;
 		case ObserverMessageType::SET_STARTING_PLAYER:
 			{
 				auto player = read_raw<unsigned int>(packet);
-				observer.set_starting_player(player);
+				observer->set_starting_player(player);
 			}
 			break;
 		case ObserverMessageType::SET_SCORES:
 			{
 				auto scores = GameScore::deserialize(packet);
-				observer.set_scores(scores);
+				observer->set_scores(scores);
 			}
 			break;
 		case ObserverMessageType::REVEAL_PLAYER_CITIES:
 			{
 				auto player = read_raw<unsigned int>(packet);
 				auto cities = read_vector<unsigned int>(packet, read_raw<unsigned int>);
-				observer.reveal_player_cities(player, cities);
+				observer->reveal_player_cities(player, cities);
 			}
 			break;
 		case ObserverMessageType::END_ROUND:
-			observer.end_round();
+			observer->end_round();
 			break;
 		}
 		break;

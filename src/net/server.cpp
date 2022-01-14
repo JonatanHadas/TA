@@ -32,6 +32,11 @@ void Server::send_packet(peer_id_t peer_id, const string& data, enet_uint8 chann
 }
 
 peer_id_t Server::add_new_peer(ENetPeer* peer){
+	if(peers.size() == 0) {
+		peers[0] = peer;
+		peer->data = reinterpret_cast<void*>(0);
+		return 0;
+	}
 	for(auto entry: peers){
 		intptr_t id_candidate = entry.first + 1;
 		if(id_candidate == -1) continue;
